@@ -18,7 +18,7 @@ class Cliente {
     }
 }
 
-// NUEVO :
+// NUEVO : herencia de metodos y atributos
 class Empresa extends Cliente {
     constructor(nombre, saldo, telefono, tipo) {
         // Va hacia el constructor del padre

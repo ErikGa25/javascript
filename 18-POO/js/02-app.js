@@ -17,7 +17,7 @@ class Cliente {
     }
 
 
-    // También existe algo llamado las propiedades staticas, estas no requieren ser instanciadas...
+    // También existe algo llamado las propiedades staticas, estas no requieren ser instanciadas... no pertenecen al objeto
 
     static bienvenida(){
         return `Bienvenido al cajero`;
