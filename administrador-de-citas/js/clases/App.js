@@ -1,6 +1,6 @@
 // importamos algunas funciones que necesitamos en esta clase
-import { datosCita, nuevaCita } from '../funciones.js';
-import { mascotaInput, propietarioInput, telefonoInput, fechaInput, horaInput, sintomasInput, formulario } from '../selectores.js';
+import { datosCita, nuevaCita, crearBD } from '../funciones.js';
+import { mascotaInput, propietarioInput, telefonoInput, fechaInput, horaInput, sintomasInput, formulario,  } from '../selectores.js';
 
 class App {
     constructor() {
@@ -16,6 +16,9 @@ class App {
         sintomasInput.addEventListener('input', datosCita);
         // formulario para nuevas citas
         formulario.addEventListener('submit', nuevaCita);
+
+        // crear la BD
+        crearBD();
     }
 }
 

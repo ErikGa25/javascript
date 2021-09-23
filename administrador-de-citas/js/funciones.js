@@ -7,6 +7,9 @@ import { mascotaInput, propietarioInput, telefonoInput, fechaInput, horaInput, s
 const ui = new UI();
 const administrarCitas = new Citas();
 
+
+export let DB;
+
 // para verificar si se esta creadon o editanto una cita
 let editando;
 
@@ -38,16 +41,30 @@ export function nuevaCita(e) {
     }
 
     if(editando) {
-        ui.imprimirAlerta('Editado correctamente');
-
         // pasar el objeto de la cita a la edición
         administrarCitas.editarCita({...citaObj});
 
-        // cambiar el texto del botón al original
-        formulario.querySelector('button[type="submit"]').textContent = 'Crear Cita';
 
-        // quitar modo edición
-        editando = false;
+        // edita en el indexedDB
+        const transaction = DB.transaction(['citas'], 'readwrite');
+        const objectStore = transaction.objectStore('citas');
+
+        // este metodo nos permite editar
+        objectStore.put(citaObj);
+
+        transaction.oncomplete = function() {
+            ui.imprimirAlerta('Editado correctamente');
+
+            // cambiar el texto del botón al original
+            formulario.querySelector('button[type="submit"]').textContent = 'Crear Cita';
+
+            // quitar modo edición
+            editando = false;
+        }
+
+        transaction.onerror = function() {
+            console.log('Hubo un error al editar');
+        }
     } else {
         // generar un id unico
         citaObj.id = Date.now();
@@ -55,8 +72,21 @@ export function nuevaCita(e) {
         // creando una nueva cita
         administrarCitas.agregarCita({...citaObj});
 
-        // mensaje de agregado correctamente
-        ui.imprimirAlerta('Se agregó correctamente');
+        //  insertar registro en indexedDB
+        const transaction = DB.transaction(['citas'], 'readwrite');
+
+        // habilitar el objetStore
+        const objectStore = transaction.objectStore('citas');
+
+        // insertar en la BD
+        objectStore.add(citaObj);
+
+        transaction.oncomplete = function() {
+            console.log('cita agregada');
+            
+            // mensaje de agregado correctamente
+            ui.imprimirAlerta('Se agregó correctamente');
+        }
     }
 
     // reinicia el objeto para la validacion
@@ -66,7 +96,7 @@ export function nuevaCita(e) {
     formulario.reset();
 
     // mostrar las citas en el HTML
-    ui.imprimirCitas(administrarCitas);
+    ui.imprimirCitas();
 }
 
 export function reiniciarObjeto() {
@@ -79,14 +109,28 @@ export function reiniciarObjeto() {
 }
 
 export function eliminarCita(id) {
-    // eliminar la cita
-    administrarCitas.eliminarCita(id);
+    // eliminar la cita | codigo anterior
+    //administrarCitas.eliminarCita(id);
 
-    // muestre un mensaje
-    ui.imprimirAlerta('La cita se elimino correctamente');
+    const transaction = DB.transaction(['citas'], 'readwrite');
+    const objectStore = transaction.objectStore('citas');
 
-    // refrescar las citas
-    ui.imprimirCitas(administrarCitas)
+    // funcion para eliminar de la DB indexed
+    objectStore.delete(id);
+
+    transaction.oncomplete = () => {
+        console.log(`Cita ${id} eliminado..`);
+
+        // muestre un mensaje
+        ui.imprimirAlerta('La cita se elimino correctamente');
+
+        // refrescar las citas
+        ui.imprimirCitas()
+    }
+
+    transaction.onerror = () => {
+        console.log('Hubo un error al tratar de eliminar un registro');
+    }
 }
 
 // función carga los datos y el modo edición
@@ -115,4 +159,45 @@ export function cargarEdicion(cita) {
     formulario.querySelector('button[type="submit"]').textContent = 'Guardar Cambios';
 
     editando = true;
+}
+
+export function crearBD() {
+    // crea la version 1.0
+    const crearBD = window.indexedDB.open('citas', 1);
+
+    // si hay un error
+    crearBD.onerror = function() {
+        console.log('hubo un error');
+    }
+
+    // si todo sale bien
+    crearBD.onsuccess = function() {
+        console.log('BD creada');
+
+        DB = crearBD.result;
+
+        // mostrar citas al cargar (Pero indexed DB ya esta lista)
+        ui.imprimirCitas();
+    }
+
+    // definir el schema
+    crearBD.onupgradeneeded = function(e) {
+        const db = e.target.result;
+
+        const objectStore = db.createObjectStore('citas', {
+            keyPath: 'id',
+            autoIncrement: true
+        });
+
+        // definir todas las columnas
+        objectStore.createIndex('mascota', 'mascota', {unique: false});
+        objectStore.createIndex('propietario', 'propietario', {unique: false});
+        objectStore.createIndex('telefono', 'telefono', {unique: false});
+        objectStore.createIndex('fecha', 'fecha', {unique: false});
+        objectStore.createIndex('hora', 'hora', {unique: false});
+        objectStore.createIndex('sintomas', 'sintomas', {unique: false});
+        objectStore.createIndex('id', 'id', {unique: true});
+
+        console.log('db creada y lista');
+    }
 }
