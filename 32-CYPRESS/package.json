@@ -1,0 +1,14 @@
+{
+  "name": "32-cypress",
+  "version": "1.0.0",
+  "description": "aprendiendo CYPRESS",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "ERIK GARCIA",
+  "license": "ISC",
+  "devDependencies": {
+    "cypress": "^8.7.0"
+  }
+}
